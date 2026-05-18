@@ -31,20 +31,26 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
+// Bot 1 - Registration
+const registrationBotToken = process.env.TELEGRAM_REGISTRATION_BOT_TOKEN;
 const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
-let bot: TelegramBot | null = null;
+const registrationBot = registrationBotToken
+  ? new TelegramBot(registrationBotToken, { polling: true })
+  : null;
 
-if (telegramToken) {
-  // Use polling for simplicity in dev/cloud run, unless we strictly want webhooks
-  bot = new TelegramBot(telegramToken, { polling: true });
+// Bot 2 - Results
+const resultsBotToken = process.env.TELEGRAM_RESULTS_BOT_TOKEN;
+const resultsChatId = process.env.TELEGRAM_RESULTS_CHAT_ID;
+const resultsBot = resultsBotToken
+  ? new TelegramBot(resultsBotToken, { polling: true })
+  : null;
 
-  // Handle callback queries (Approve/Reject)
-  bot.on("callback_query", async (callbackQuery) => {
+if (registrationBot) {
+  registrationBot.on("callback_query", async (callbackQuery) => {
     const message = callbackQuery.message;
     const data = callbackQuery.data;
 
-    if (!data || !supabase) return;
+    if (!data || !supabase || !message) return;
 
     if (data.startsWith("approve_")) {
       const userId = data.split("_")[1];
@@ -52,10 +58,13 @@ if (telegramToken) {
         .from("users")
         .update({ status: "approved" })
         .eq("id", userId);
-      bot?.sendMessage(message!.chat.id, `User ${userId} Approved â`);
-      bot?.editMessageReplyMarkup(
+      registrationBot.sendMessage(
+        message.chat.id,
+        `User ${userId} Approved ✅`,
+      );
+      registrationBot.editMessageReplyMarkup(
         { inline_keyboard: [] },
-        { chat_id: message!.chat.id, message_id: message!.message_id },
+        { chat_id: message.chat.id, message_id: message.message_id },
       );
     } else if (data.startsWith("reject_")) {
       const userId = data.split("_")[1];
@@ -63,19 +72,122 @@ if (telegramToken) {
         .from("users")
         .update({ status: "rejected" })
         .eq("id", userId);
-      bot?.sendMessage(message!.chat.id, `User ${userId} Rejected â`);
-      bot?.editMessageReplyMarkup(
+      registrationBot.sendMessage(
+        message.chat.id,
+        `User ${userId} Rejected ❌`,
+      );
+      registrationBot.editMessageReplyMarkup(
         { inline_keyboard: [] },
-        { chat_id: message!.chat.id, message_id: message!.message_id },
+        { chat_id: message.chat.id, message_id: message.message_id },
       );
     }
   });
 
-  bot.onText(/\/bracket/, async (msg) => {
-    bot?.sendMessage(
+  registrationBot.onText(/\/players/, async (msg) => {
+    if (!supabase) return;
+    const { data } = await supabase
+      .from("users")
+      .select("name, fc_name, fc_ovr");
+    const reply =
+      data && data.length > 0
+        ? data.map((u: any) => `${u.name} (${u.fc_name} - ${u.fc_ovr})`).join("\n")
+        : "No players found.";
+    registrationBot.sendMessage(msg.chat.id, "Registered Players:\n" + reply);
+  });
+
+  registrationBot.onText(/\/bracket/, async (msg) => {
+    registrationBot.sendMessage(
       msg.chat.id,
-      "Bracket editing feature coming soon. Please open the admin web UI.",
+      "Bracket feature is fully supported in the admin web UI.",
     );
+  });
+
+  registrationBot.onText(/\/edit_name (.+)/, async (msg, match) => {
+    if (!supabase || !match) return;
+    const args = match[1].trim().split(" ");
+    if (args.length < 2) {
+      registrationBot.sendMessage(msg.chat.id, "Usage: /edit_name [id] [name]");
+      return;
+    }
+    const userId = args[0];
+    const newName = args.slice(1).join(" ");
+    await supabase.from("users").update({ name: newName }).eq("id", userId);
+    registrationBot.sendMessage(
+      msg.chat.id,
+      `Updated user ${userId} name to ${newName}.`,
+    );
+  });
+
+  registrationBot.onText(/\/edit_score (.+)/, async (msg, match) => {
+    if (!supabase || !match) return;
+    const args = match[1].trim().split(" ");
+    if (args.length !== 3) {
+      registrationBot.sendMessage(
+        msg.chat.id,
+        "Usage: /edit_score [match_id] [s1] [s2]",
+      );
+      return;
+    }
+    const [matchId, s1, s2] = args;
+    await supabase
+      .from("matches")
+      .update({ score_1: s1, score_2: s2 })
+      .eq("id", matchId);
+    registrationBot.sendMessage(
+      msg.chat.id,
+      `Updated match ${matchId} score to ${s1} - ${s2}.`,
+    );
+  });
+}
+
+if (resultsBot) {
+  resultsBot.on("callback_query", async (callbackQuery) => {
+    const message = callbackQuery.message;
+    const data = callbackQuery.data;
+
+    if (!data || !supabase || !message) return;
+
+    if (data.startsWith("verify_")) {
+      const matchId = data.split("_")[1];
+      await supabase
+        .from("matches")
+        .update({ status: "verified" })
+        .eq("id", matchId);
+      resultsBot.sendMessage(message.chat.id, `Match ${matchId} Verified ✅`);
+      resultsBot.editMessageReplyMarkup(
+        { inline_keyboard: [] },
+        { chat_id: message.chat.id, message_id: message.message_id },
+      );
+    } else if (data.startsWith("reject_match_")) {
+      const matchId = data.split("_")[2];
+      await supabase
+        .from("matches")
+        .update({ status: "rejected" })
+        .eq("id", matchId);
+      resultsBot.sendMessage(message.chat.id, `Match ${matchId} Rejected ❌`);
+      resultsBot.editMessageReplyMarkup(
+        { inline_keyboard: [] },
+        { chat_id: message.chat.id, message_id: message.message_id },
+      );
+    }
+  });
+
+  resultsBot.onText(/\/pending/, async (msg) => {
+    if (!supabase) return;
+    const { data } = await supabase
+      .from("matches")
+      .select("*")
+      .eq("status", "pending_verification");
+    const reply =
+      data && data.length > 0
+        ? data
+            .map(
+              (m: any) =>
+                `Match ${m.id}: User ${m.player_id} VS ${m.opponent_id} (${m.score_1}-${m.score_2})`,
+            )
+            .join("\n")
+        : "No pending matches.";
+    resultsBot.sendMessage(msg.chat.id, "Pending Matches:\n" + reply);
   });
 }
 
@@ -172,27 +284,27 @@ app.post(
       }
 
       // 3. Notify Telegram Admin
-      if (bot && adminChatId) {
+      if (registrationBot && adminChatId) {
         const tgMsg = `New Registration:\nName: ${name}\nAge: ${age}\nMobile: ${mobile}\nFC Name: ${fcName}\nOVR: ${fcOvr}\nExp: ${fcExperience}`;
         const opts = {
           reply_markup: {
             inline_keyboard: [
               [
-                { text: "Approve â", callback_data: `approve_${uid}` },
-                { text: "Reject â", callback_data: `reject_${uid}` },
+                { text: "Approve ✅", callback_data: `approve_${uid}` },
+                { text: "Reject ❌", callback_data: `reject_${uid}` },
               ],
             ],
           },
         };
 
         // Sending with photos is slightly more complex, we send text first, then photos
-        await bot.sendMessage(adminChatId, tgMsg, opts);
+        await registrationBot.sendMessage(adminChatId, tgMsg, opts);
         if (photoUrl)
-          await bot.sendPhoto(adminChatId, photoUrl, {
+          await registrationBot.sendPhoto(adminChatId, photoUrl, {
             caption: "Personal Photo",
           });
         if (paymentProofUrl)
-          await bot.sendPhoto(adminChatId, paymentProofUrl, {
+          await registrationBot.sendPhoto(adminChatId, paymentProofUrl, {
             caption: "Payment Proof",
           });
       }
@@ -237,7 +349,7 @@ app.post(
       }
 
       // Insert result
-      const { error } = await supabase.from("matches").insert([
+      const { data: insertedMatch, error } = await supabase.from("matches").insert([
         {
           player_id: uid,
           opponent_id: opponentId,
@@ -246,18 +358,28 @@ app.post(
           screenshot_url: screenshotUrl,
           status: "pending_verification",
         },
-      ]);
+      ]).select().single();
 
       if (error) throw error;
 
       // Notify Telegram Admin
-      if (bot && adminChatId) {
-        await bot.sendMessage(
-          adminChatId,
+      if (resultsBot && resultsChatId) {
+        await resultsBot.sendMessage(
+          resultsChatId,
           `New Match Result Uploaded by ${uid}:\nScore: ${score1} - ${score2}\nOpponent: ${opponentId}`,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: "Verify ✅", callback_data: `verify_${insertedMatch.id}` },
+                  { text: "Reject ❌", callback_data: `reject_match_${insertedMatch.id}` },
+                ],
+              ],
+            },
+          }
         );
         if (screenshotUrl) {
-          await bot.sendPhoto(adminChatId, screenshotUrl);
+          await resultsBot.sendPhoto(resultsChatId, screenshotUrl);
         }
       }
 
