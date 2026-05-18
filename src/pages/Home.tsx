@@ -134,7 +134,7 @@ export default function Home() {
       <nav className="border-b border-gray-800 bg-gray-950/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-lg text-emerald-400">
-            <Trophy className="w-6 h-6" /> FC Mobile Tourney
+            <Trophy className="w-6 h-6" /> KnoX11 Tourney
           </div>
           {session ? (
             <button onClick={handleLogout} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
@@ -147,7 +147,7 @@ export default function Home() {
       <main className="max-w-2xl mx-auto p-4 py-8">
         {!session ? (
           <div className="text-center py-20 px-4">
-            <h1 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">Show Your FC Mobile Skills</h1>
+            <h1 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">Show Your KnoX11 Skills</h1>
             <p className="text-xl text-gray-400 mb-10 max-w-lg mx-auto">Register for the ultimate tournament, compete with the best, and prove your team's worth.</p>
             <button 
               onClick={handleLogin}
@@ -188,7 +188,7 @@ export default function Home() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">FC Mobile Experience (Years/Months)</label>
+                <label className="block text-sm font-medium text-gray-400 mb-1">KnoX11 Experience (Years/Months)</label>
                 <input required className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all" value={formData.fcExperience} onChange={e => setFormData({...formData, fcExperience: e.target.value})} />
               </div>
 

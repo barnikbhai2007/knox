@@ -1,6 +1,6 @@
 {
   "name": "KnoX11",
-  "description": "Football FC Mobile Registration website with admin Telegram bot integration",
+  "description": "KnoX11 website with admin Telegram bot integration",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -4,7 +4,6 @@ import { supabase } from '../supabaseClient';
 import { motion } from 'motion/react';
 import { Upload, ChevronRight, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { cn } from '../lib/utils';
-import axios from 'axios';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -25,6 +24,7 @@ export default function Register() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [success, setSuccess] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -45,6 +45,7 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitted(true);
     setError('');
     setLoading(true);
 
@@ -59,18 +60,20 @@ export default function Register() {
       form.append('photo', photo);
       form.append('paymentProof', paymentProof);
 
-      const response = await axios.post('/api/register', form, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        body: form,
       });
+      const result = await response.json();
 
-      if (response.data.success) {
-        setSuccess(true);
-      } else {
-        throw new Error(response.data.error || 'Registration failed');
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Registration failed');
       }
+      
+      setSuccess(true);
 
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message);
+      setError(err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -105,7 +108,7 @@ export default function Register() {
       <div className="max-w-2xl mx-auto">
         <header className="mb-10 text-center pt-8">
           <h1 className="font-display uppercase text-4xl mb-2">Player Registration</h1>
-          <p className="text-gray-400 text-sm">Please fill out your FC Mobile details.</p>
+          <p className="text-gray-400 text-sm">Please fill out your KnoX11 details.</p>
         </header>
 
         {error && (
@@ -137,7 +140,7 @@ export default function Register() {
           </div>
 
           <div className="bg-fc-card p-6 rounded-2xl border border-white/5 space-y-4">
-            <h3 className="font-display uppercase text-xl text-fc-green">FC Mobile Profile</h3>
+            <h3 className="font-display uppercase text-xl text-fc-green">KnoX11 Profile</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block">
@@ -173,17 +176,22 @@ export default function Register() {
                  <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold ml-1">Personal Photo</span>
                  <label className={cn(
                     "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-colors relative overflow-hidden",
-                    photo ? "border-fc-green bg-fc-green/5" : "border-gray-600 hover:border-gray-400 bg-black/50"
+                    photo ? "border-fc-green bg-fc-green/5" 
+                          : submitted && !photo 
+                              ? "border-red-500 bg-red-950/20" 
+                              : "border-gray-600 hover:border-gray-400 bg-black/50"
                  )}>
                    {photo ? (
                       <span className="font-mono text-xs text-fc-green px-2 text-center break-all">{photo.name}</span>
                    ) : (
                       <>
-                        <Upload className="w-6 h-6 text-gray-400 mb-2" />
-                        <span className="text-xs text-gray-400 font-medium">Upload Image</span>
+                        <Upload className={cn("w-6 h-6 mb-2", submitted && !photo ? "text-red-500" : "text-gray-400")} />
+                        <span className={cn("text-xs font-medium", submitted && !photo ? "text-red-500" : "text-gray-400")}>
+                           {submitted && !photo ? "Photo Required!" : "Upload Image"}
+                        </span>
                       </>
                    )}
-                   <input required type="file" accept="image/*" className="hidden" onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
+                   <input required={!photo && submitted} type="file" accept="image/*" className="hidden" onChange={(e) => { setPhoto(e.target.files?.[0] || null); setError(''); }} />
                  </label>
               </div>
 
@@ -191,17 +199,22 @@ export default function Register() {
                  <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold ml-1">Payment Proof</span>
                  <label className={cn(
                     "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-colors relative overflow-hidden",
-                    paymentProof ? "border-fc-green bg-fc-green/5" : "border-gray-600 hover:border-gray-400 bg-black/50"
+                    paymentProof ? "border-fc-green bg-fc-green/5" 
+                                 : submitted && !paymentProof
+                                     ? "border-red-500 bg-red-950/20"
+                                     : "border-gray-600 hover:border-gray-400 bg-black/50"
                  )}>
                    {paymentProof ? (
                       <span className="font-mono text-xs text-fc-green px-2 text-center break-all">{paymentProof.name}</span>
                    ) : (
                       <>
-                        <Upload className="w-6 h-6 text-gray-400 mb-2" />
-                        <span className="text-xs text-gray-400 font-medium">Upload Screenshot</span>
+                        <Upload className={cn("w-6 h-6 mb-2", submitted && !paymentProof ? "text-red-500" : "text-gray-400")} />
+                        <span className={cn("text-xs font-medium", submitted && !paymentProof ? "text-red-500" : "text-gray-400")}>
+                           {submitted && !paymentProof ? "Proof Required!" : "Upload Screenshot"}
+                        </span>
                       </>
                    )}
-                   <input required type="file" accept="image/*" className="hidden" onChange={(e) => setPaymentProof(e.target.files?.[0] || null)} />
+                   <input required={!paymentProof && submitted} type="file" accept="image/*" className="hidden" onChange={(e) => { setPaymentProof(e.target.files?.[0] || null); setError(''); }} />
                  </label>
               </div>
             </div>
