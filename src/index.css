@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Anton", sans-serif;
+  
+  --color-fc-dark: #050511;
+  --color-fc-card: #0F1020;
+  --color-fc-green: #39ff14;
+}
+
+body {
+  background-color: var(--color-fc-dark);
+  color: white;
+}
