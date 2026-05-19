@@ -54,7 +54,7 @@ export default function Admin() {
   const [platformSettings, setPlatformSettings] = useState({
     rulesText: 'Rules will be announced shortly.',
     paymentText: 'Pay 15₹ to this QR code',
-    paymentQrUrl: ''
+    paymentQrUrl: 'https://res.cloudinary.com/speed-searches/image/upload/v1779184989/Screenshot_20260511_125115_FamApp_kaxtkn.jpg'
   });
   const [isUploadingQr, setIsUploadingQr] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -425,22 +425,26 @@ export default function Admin() {
                   
                   <div>
                     <label className="block text-sm font-bold text-fc-green mb-2 uppercase tracking-wider">Payment QR Code Image</label>
-                    <div className="flex items-center gap-4">
-                       <label className="flex items-center gap-3 cursor-pointer">
-                          <span className="px-4 py-2 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors">
-                            {isUploadingQr ? "Uploading..." : "Upload New QR Image"}
-                          </span>
-                          <input type="file" accept="image/*" className="hidden" onChange={handleUploadQrImage} disabled={isUploadingQr} />
-                       </label>
-                       {platformSettings.paymentQrUrl && (
-                          <div className="text-xs text-green-400 bg-green-400/10 px-3 py-1 rounded">
-                             Image Uploaded
-                          </div>
-                       )}
+                    <div className="flex flex-col gap-4">
+                       <div className="flex items-center gap-4">
+                         <label className="flex items-center gap-3 cursor-pointer">
+                            <span className="px-4 py-2 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors">
+                              {isUploadingQr ? "Uploading..." : "Upload New QR Image"}
+                            </span>
+                            <input type="file" accept="image/*" className="hidden" onChange={handleUploadQrImage} disabled={isUploadingQr} />
+                         </label>
+                       </div>
+                       <input 
+                         type="text"
+                         value={platformSettings.paymentQrUrl}
+                         onChange={e => setPlatformSettings(prev => ({...prev, paymentQrUrl: e.target.value}))}
+                         className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white focus:border-fc-green focus:outline-none transition-colors"
+                         placeholder="Or paste image URL here..."
+                       />
                     </div>
                     {platformSettings.paymentQrUrl && (
                         <div className="mt-4 p-2 bg-white/5 rounded-xl inline-block">
-                           <img src={platformSettings.paymentQrUrl} alt="QR Code" className="w-32 h-32 object-contain" />
+                           <img src={platformSettings.paymentQrUrl} alt="QR Code" className="w-32 h-32 object-contain bg-white rounded-lg p-1" />
                         </div>
                     )}
                   </div>
