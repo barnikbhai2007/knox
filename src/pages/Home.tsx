@@ -15,6 +15,8 @@ export default function Home() {
   const [payment, setPayment] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
   useEffect(() => {
     if (!supabase) {
       setLoading(false);
@@ -25,6 +27,9 @@ export default function Home() {
       setSession(session);
       if (session?.user) {
         fetchUserData(session.user.id);
+        if (session.user.email === 'webblogger82@gmail.com' || (session.user.email && session.user.email.includes('admin'))) {
+           setIsAdmin(true);
+        }
       } else {
         setLoading(false);
       }
@@ -36,8 +41,12 @@ export default function Home() {
       setSession(session);
       if (session?.user) {
         fetchUserData(session.user.id);
+        if (session.user.email === 'webblogger82@gmail.com' || (session.user.email && session.user.email.includes('admin'))) {
+           setIsAdmin(true);
+        }
       } else {
         setUserData(null);
+        setIsAdmin(false);
         setLoading(false);
       }
     });
@@ -131,9 +140,16 @@ export default function Home() {
             <Trophy className="w-6 h-6" /> KnoX11 Tourney
           </div>
           {session ? (
-            <button onClick={handleLogout} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
-              Sign Out
-            </button>
+            <div className="flex items-center gap-4">
+              {isAdmin && (
+                <a href="/admin" className="text-emerald-400 font-semibold uppercase text-sm border border-emerald-500/50 bg-emerald-500/10 px-3 py-1.5 rounded-lg hover:bg-emerald-500/20 transition-colors">
+                  Admin Panel
+                </a>
+              )}
+              <button onClick={handleLogout} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                Sign Out
+              </button>
+            </div>
           ) : null}
         </div>
       </nav>
