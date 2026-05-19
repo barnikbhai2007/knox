@@ -421,16 +421,14 @@ app.post(
       if (!supabase) return res.status(500).json({ error: "Supabase not configured" });
 
       // Upload to telegra.ph (anonymous image host)
+      const FormData = require("form-data");
       const form = new FormData();
-      const blob = new Blob([file.buffer], { type: file.mimetype });
-      form.append("file", blob, file.originalname);
+      form.append("file", file.buffer, file.originalname);
 
-      // Using fetch instead of axios to avoid node specific issues since we use TSX
-      const response = await fetch("https://telegra.ph/upload", {
-        method: "POST",
-        body: form,
+      const response = await axios.post("https://telegra.ph/upload", form, {
+        headers: form.getHeaders(),
       });
-      const result = await response.json();
+      const result = response.data;
 
       if (!result || !result[0] || !result[0].src) {
          throw new Error("Failed to upload image");
