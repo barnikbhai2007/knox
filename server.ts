@@ -410,6 +410,51 @@ app.post(
   },
 );
 
+app.post(
+  "/api/upload-bracket",
+  upload.single("bracketImage"),
+  async (req, res) => {
+    try {
+      const file = req.file;
+      if (!file) return res.status(400).json({ error: "No image uploaded" });
+
+      if (!supabase) return res.status(500).json({ error: "Supabase not configured" });
+
+      // Upload to telegra.ph (anonymous image host)
+      const form = new FormData();
+      const blob = new Blob([file.buffer], { type: file.mimetype });
+      form.append("file", blob, file.originalname);
+
+      // Using fetch instead of axios to avoid node specific issues since we use TSX
+      const response = await fetch("https://telegra.ph/upload", {
+        method: "POST",
+        body: form,
+      });
+      const result = await response.json();
+
+      if (!result || !result[0] || !result[0].src) {
+         throw new Error("Failed to upload image");
+      }
+
+      const imageUrl = "https://telegra.ph" + result[0].src;
+
+      // Upsert into brackets table with special round
+      const { data, error } = await supabase
+         .from("brackets")
+         .upsert([{ id: "bracket-image-id", round: "BRACKET_IMAGE", fc_team1: imageUrl, score1: 0, score2: 0, fc_team2: "" }], { onConflict: 'round' })
+         .select();
+      
+      // Since round is not a unique constraint, we might need to delete existing manually:
+      await supabase.from("brackets").delete().eq("round", "BRACKET_IMAGE").neq("id", "bracket-image-id");
+
+      res.json({ success: true, url: imageUrl });
+    } catch (err: any) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
 // Vite middleware setup
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

@@ -92,7 +92,7 @@ export default function Dashboard() {
     }
   };
 
-  const userMatches = brackets.filter(b => b.player1_id === userData?.id || b.player2_id === userData?.id);
+  const userMatches = brackets.filter(b => b.round !== 'BRACKET_IMAGE' && (b.player1_id === userData?.id || b.player2_id === userData?.id));
 
   if (loading) {
     return <div className="h-screen bg-fc-dark flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-fc-green"></div></div>;

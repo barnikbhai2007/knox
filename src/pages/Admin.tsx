@@ -50,9 +50,40 @@ export default function Admin() {
   });
   const [editingBracketId, setEditingBracketId] = useState<string | null>(null);
 
+  // Bracket Image State
+  const [isUploadingBracket, setIsUploadingBracket] = useState(false);
+
   useEffect(() => {
     checkSession();
   }, []);
+
+  const handleUploadBracketImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingBracket(true);
+    const formData = new FormData();
+    formData.append("bracketImage", file);
+
+    try {
+      const res = await fetch("/api/upload-bracket", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        alert("Bracket image updated successfully!");
+        fetchBrackets();
+      } else {
+        alert("Failed to upload: " + data.error);
+      }
+    } catch (err) {
+      alert("Error uploading bracket image.");
+    } finally {
+      setIsUploadingBracket(false);
+    }
+  };
 
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -331,6 +362,17 @@ export default function Admin() {
                 </div>
               </div>
 
+              <div className="bg-gray-950/50 p-6 rounded-2xl border border-white/10 space-y-4">
+                  <h3 className="text-xl font-medium tracking-tight mb-2">Upload Custom Bracket Image</h3>
+                  <p className="text-sm text-gray-400 mb-4">Alternatively, upload an image of a bracket from a 3rd party tool (like Challonge) to display to players.</p>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                     <span className="px-4 py-2 bg-fc-green text-black font-bold uppercase tracking-wider rounded-lg hover:bg-emerald-400 transition-colors">
+                       {isUploadingBracket ? "Uploading..." : "Select Bracket Image"}
+                     </span>
+                     <input type="file" accept="image/*" className="hidden" onChange={handleUploadBracketImage} disabled={isUploadingBracket} />
+                  </label>
+              </div>
+
               <div className="bg-fc-card p-6 rounded-2xl border border-white/10 mt-8 mb-6 overflow-hidden max-w-full relative z-0">
                 <h3 className="text-xl font-medium tracking-tight mb-8">Tournament Visual Bracket</h3>
                 <div className="w-full overflow-x-auto pb-4">
@@ -339,7 +381,7 @@ export default function Admin() {
               </div>
 
               <div className="space-y-4">
-                {brackets.map(bracket => {
+                {brackets.filter(b => b.round !== 'BRACKET_IMAGE').map(bracket => {
                   const isEditing = editingBracketId === bracket.id;
                   
                   if (isEditing) {
