@@ -68,10 +68,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 font-sans selection:bg-emerald-500/30">
-      <nav className="border-b border-gray-800 bg-gray-950/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-lg text-emerald-400">
-            <Trophy className="w-6 h-6" /> KnoX11 Tourney
+      <nav className="border-b border-white/5 bg-fc-dark/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-4 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-8 h-8 text-fc-green" />
+            <h1 className="font-display uppercase text-xl font-bold tracking-wider">KnoX11 Tourney</h1>
           </div>
           {session ? (
             <div className="flex items-center gap-4">

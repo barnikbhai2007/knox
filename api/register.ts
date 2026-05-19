@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import formidable from "formidable";
 import TelegramBot from "node-telegram-bot-api";
+import fs from "fs";
 
 export const config = {
   api: { bodyParser: false },
@@ -24,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const form = formidable({ multiples: true, keepExtensions: true });
-    const [fields] = await form.parse(req);
+    const [fields, files] = await form.parse(req);
 
     const name = Array.isArray(fields.name) ? fields.name[0] : (fields.name as string);
     const age = Array.isArray(fields.age) ? fields.age[0] : (fields.age as string);
@@ -35,6 +36,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const fcExperience = Array.isArray(fields.fcExperience) ? fields.fcExperience[0] : (fields.fcExperience as string);
     const uid = Array.isArray(fields.uid) ? fields.uid[0] : (fields.uid as string);
     const email = Array.isArray(fields.email) ? fields.email[0] : (fields.email as string);
+
+    const photoFile = Array.isArray(files.photo) ? files.photo[0] : files.photo;
+    const paymentProofFile = Array.isArray(files.paymentProof) ? files.paymentProof[0] : files.paymentProof;
 
     // Insert into Supabase
     const { data: user, error } = await supabase
@@ -78,6 +82,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
 
         await registrationBot.sendMessage(adminChatId, tgMsg, opts);
+
+        if (photoFile) {
+          const stream = fs.createReadStream(photoFile.filepath);
+          await registrationBot.sendPhoto(adminChatId, stream, { caption: "Personal Photo" });
+        }
+        if (paymentProofFile) {
+          const stream = fs.createReadStream(paymentProofFile.filepath);
+          await registrationBot.sendPhoto(adminChatId, stream, { caption: "Payment Proof" });
+        }
       }
     } catch (tgError) {
       console.error("Telegram notification error:", tgError);

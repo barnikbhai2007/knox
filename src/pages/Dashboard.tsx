@@ -99,8 +99,10 @@ export default function Dashboard() {
     <div className="min-h-screen bg-fc-dark text-white p-6 pb-20">
       <header className="max-w-4xl mx-auto flex items-center justify-between mb-10 pt-4 border-b border-white/10 pb-4">
          <div>
-            <h1 className="font-display uppercase text-2xl">Player Dashboard</h1>
-            <p className="text-gray-400 font-mono text-xs mt-1">UID: {userData?.fc_uid}</p>
+            <div className="flex items-center gap-2">
+              <h1 className="font-display uppercase text-xl font-bold tracking-wider text-fc-green">Player Dashboard</h1>
+            </div>
+            <p className="text-gray-400 font-mono text-xs mt-2">UID: {userData?.fc_uid}</p>
          </div>
          <div className="flex items-center gap-4">
             {isAdmin && (
@@ -120,7 +122,7 @@ export default function Dashboard() {
            <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-2xl p-6 flex items-start gap-4">
               <Clock className="w-8 h-8 text-yellow-500 shrink-0 mt-1" />
               <div>
-                 <h2 className="font-display uppercase text-xl text-yellow-500 mb-1">Application Under Review</h2>
+                 <h2 className="font-display uppercase text-xl font-bold tracking-wider text-yellow-500 mb-1">Application Under Review</h2>
                  <p className="text-yellow-200/70 text-sm">Your application is currently being reviewed by the admins via Telegram. Please check back later.</p>
               </div>
            </div>
@@ -130,7 +132,7 @@ export default function Dashboard() {
            <div className="bg-red-900/20 border border-red-500/30 rounded-2xl p-6 flex items-start gap-4">
               <AlertTriangle className="w-8 h-8 text-red-500 shrink-0 mt-1" />
               <div>
-                 <h2 className="font-display uppercase text-xl text-red-500 mb-1">Application Rejected</h2>
+                 <h2 className="font-display uppercase text-xl font-bold tracking-wider text-red-500 mb-1">Application Rejected</h2>
                  <p className="text-red-200/70 text-sm">Unfortunately, your application was not approved for this tournament.</p>
               </div>
            </div>
@@ -144,7 +146,7 @@ export default function Dashboard() {
                    <div className="w-10 h-10 rounded-full bg-fc-green/10 flex items-center justify-center">
                      <Swords className="w-5 h-5 text-fc-green" />
                    </div>
-                   <h2 className="font-display text-xl uppercase tracking-wider">Report Result</h2>
+                   <h2 className="font-display text-xl uppercase font-bold tracking-wider text-fc-green">Report Result</h2>
                  </div>
 
                  {uploadSuccess && (
@@ -218,7 +220,7 @@ export default function Dashboard() {
               </div>
 
               <div className="bg-fc-card border border-white/5 rounded-3xl p-6">
-                 <h2 className="font-display text-xl uppercase tracking-wider mb-6">Upcoming Matches & Brackets</h2>
+                 <h2 className="font-display uppercase text-xl font-bold tracking-wider text-fc-green mb-6">Upcoming Matches & Brackets</h2>
                  {brackets.length > 0 ? (
                     <div className="space-y-4">
                       {brackets.map(bracket => {
@@ -260,7 +262,7 @@ export default function Dashboard() {
         )}
 
         <div className="bg-fc-card border border-white/5 rounded-3xl p-6 mt-6">
-           <h2 className="font-display text-xl uppercase tracking-wider mb-4">Tournament Rules</h2>
+           <h2 className="font-display uppercase text-xl font-bold tracking-wider text-fc-green mb-4">Tournament Rules</h2>
            <div className="text-gray-400 text-sm space-y-2">
              <p>Rules will be announced shortly. Please check back later or wait for Telegram announcements.</p>
            </div>
