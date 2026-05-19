@@ -54,8 +54,8 @@ export default function Admin() {
 
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate('/');
+    if (!session || (session.user.email !== 'webblogger82@gmail.com' && !session.user.email?.includes('admin'))) {
+      navigate('/dashboard');
       return;
     }
     setIsAdmin(true);

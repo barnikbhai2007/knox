@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { LogOut, Upload, Swords, Clock, AlertTriangle } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -9,6 +9,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [matchData, setMatchData] = useState({ opponentId: '', score1: '', score2: '' });
@@ -36,6 +37,9 @@ export default function Dashboard() {
         navigate('/register');
       } else {
         setUserData(data);
+        if (session.user.email === 'webblogger82@gmail.com' || userData?.email === 'webblogger82@gmail.com' || (session.user.email && session.user.email.includes('admin'))) {
+           setIsAdmin(true);
+        }
       }
       setLoading(false);
     };
@@ -86,9 +90,16 @@ export default function Dashboard() {
             <h1 className="font-display uppercase text-2xl">Player Dashboard</h1>
             <p className="text-gray-400 font-mono text-xs mt-1">UID: {userData?.fc_uid}</p>
          </div>
-         <button onClick={handleSignOut} className="text-gray-400 hover:text-white transition-colors">
-            <LogOut className="w-6 h-6" />
-         </button>
+         <div className="flex items-center gap-4">
+            {isAdmin && (
+               <Link to="/admin" className="text-fc-green font-semibold uppercase text-sm border border-fc-green/50 bg-fc-green/10 px-3 py-1.5 rounded-lg hover:bg-fc-green/20 transition-colors">
+                 Admin Panel
+               </Link>
+            )}
+            <button onClick={handleSignOut} className="text-gray-400 hover:text-white transition-colors">
+               <LogOut className="w-6 h-6" />
+            </button>
+         </div>
       </header>
 
       <main className="max-w-4xl mx-auto space-y-6">
