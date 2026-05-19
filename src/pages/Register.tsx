@@ -51,6 +51,12 @@ export default function Register() {
 
     try {
       if (!userAuth) throw new Error("Not authenticated");
+      
+      const { name, age, mobile, fcName, fcUid, fcOvr, fcExperience } = formData;
+      if (!name || !age || !mobile || !fcName || !fcUid || !fcOvr || !fcExperience) {
+        throw new Error("Please fill out all personal and profile details");
+      }
+      
       if (!photo || !paymentProof) throw new Error("Please upload both your photo and payment proof");
 
       const form = new FormData();
@@ -118,24 +124,24 @@ export default function Register() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
           <div className="bg-fc-card p-6 rounded-2xl border border-white/5 space-y-4">
             <h3 className="font-display uppercase text-xl text-fc-green">Personal Details</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block">
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold ml-1 mb-1 block">Full Name</span>
-                <input required type="text" name="name" value={formData.name} onChange={handleChange} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none focus:border-fc-green transition-colors" placeholder="John Doe" />
+                <input type="text" name="name" value={formData.name} onChange={handleChange} className={cn("w-full bg-black border rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none transition-colors", submitted && !formData.name ? "border-red-500" : "border-white/10 focus:border-fc-green")} placeholder="John Doe" />
               </label>
               <label className="block">
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold ml-1 mb-1 block">Age</span>
-                <input required type="number" name="age" value={formData.age} onChange={handleChange} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none focus:border-fc-green transition-colors" placeholder="18" />
+                <input type="number" name="age" value={formData.age} onChange={handleChange} className={cn("w-full bg-black border rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none transition-colors", submitted && !formData.age ? "border-red-500" : "border-white/10 focus:border-fc-green")} placeholder="18" />
               </label>
             </div>
             
             <label className="block">
               <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold ml-1 mb-1 block">Mobile Number</span>
-              <input required type="tel" name="mobile" value={formData.mobile} onChange={handleChange} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none focus:border-fc-green transition-colors" placeholder="+1 234 567 8900" />
+              <input type="tel" name="mobile" value={formData.mobile} onChange={handleChange} className={cn("w-full bg-black border rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none transition-colors", submitted && !formData.mobile ? "border-red-500" : "border-white/10 focus:border-fc-green")} placeholder="+1 234 567 8900" />
             </label>
           </div>
 
@@ -145,19 +151,19 @@ export default function Register() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block">
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold ml-1 mb-1 block">In-Game Name</span>
-                <input required type="text" name="fcName" value={formData.fcName} onChange={handleChange} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none focus:border-fc-green transition-colors" placeholder="xX_Striker_Xx" />
+                <input type="text" name="fcName" value={formData.fcName} onChange={handleChange} className={cn("w-full bg-black border rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none transition-colors", submitted && !formData.fcName ? "border-red-500" : "border-white/10 focus:border-fc-green")} placeholder="xX_Striker_Xx" />
               </label>
               <label className="block">
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold ml-1 mb-1 block">Player UID</span>
-                <input required type="text" name="fcUid" value={formData.fcUid} onChange={handleChange} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none focus:border-fc-green transition-colors" placeholder="123456789" />
+                <input type="text" name="fcUid" value={formData.fcUid} onChange={handleChange} className={cn("w-full bg-black border rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none transition-colors", submitted && !formData.fcUid ? "border-red-500" : "border-white/10 focus:border-fc-green")} placeholder="123456789" />
               </label>
               <label className="block">
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold ml-1 mb-1 block">Team OVR</span>
-                <input required type="number" name="fcOvr" value={formData.fcOvr} onChange={handleChange} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none focus:border-fc-green transition-colors" placeholder="95" />
+                <input type="number" name="fcOvr" value={formData.fcOvr} onChange={handleChange} className={cn("w-full bg-black border rounded-xl px-4 py-3 placeholder:text-gray-600 focus:outline-none transition-colors", submitted && !formData.fcOvr ? "border-red-500" : "border-white/10 focus:border-fc-green")} placeholder="95" />
               </label>
               <label className="block">
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold ml-1 mb-1 block">Experience</span>
-                <select required name="fcExperience" value={formData.fcExperience} onChange={handleChange} className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-fc-green transition-colors">
+                <select name="fcExperience" value={formData.fcExperience} onChange={handleChange} className={cn("w-full bg-black border rounded-xl px-4 py-3 text-white focus:outline-none transition-colors", submitted && !formData.fcExperience ? "border-red-500" : "border-white/10 focus:border-fc-green")}>
                   <option value="" disabled>Select Level</option>
                   <option value="Beginner">Beginner (&lt; 1 Year)</option>
                   <option value="Intermediate">Intermediate (1-2 Years)</option>
@@ -191,7 +197,7 @@ export default function Register() {
                         </span>
                       </>
                    )}
-                   <input required={!photo && submitted} type="file" accept="image/*" className="hidden" onChange={(e) => { setPhoto(e.target.files?.[0] || null); setError(''); }} />
+                   <input type="file" accept="image/*" className="hidden" onChange={(e) => { setPhoto(e.target.files?.[0] || null); setError(''); }} />
                  </label>
               </div>
 
@@ -214,7 +220,7 @@ export default function Register() {
                         </span>
                       </>
                    )}
-                   <input required={!paymentProof && submitted} type="file" accept="image/*" className="hidden" onChange={(e) => { setPaymentProof(e.target.files?.[0] || null); setError(''); }} />
+                   <input type="file" accept="image/*" className="hidden" onChange={(e) => { setPaymentProof(e.target.files?.[0] || null); setError(''); }} />
                  </label>
               </div>
             </div>
