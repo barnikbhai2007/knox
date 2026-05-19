@@ -226,14 +226,19 @@ app.post(
       // 1. Upload files to Cloudinary
       const uploadStream = (
         fileBuffer: Buffer,
+        mimetype: string,
         folder: string,
       ): Promise<string> => {
+        if (!process.env.CLOUDINARY_API_KEY) {
+          // Do not use huge base64 strings as they crash Supabase and Telegram!
+          return Promise.resolve("");
+        }
         return new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
             { folder },
             (error, result) => {
               if (result) resolve(result.secure_url);
-              else reject(error);
+              else reject(new Error(error?.message || "Cloudinary error"));
             },
           );
           stream.end(fileBuffer);
@@ -246,12 +251,14 @@ app.post(
       if (files["photo"] && files["photo"][0]) {
         photoUrl = await uploadStream(
           files["photo"][0].buffer,
+          files["photo"][0].mimetype,
           "fc_registration/photos",
         );
       }
       if (files["paymentProof"] && files["paymentProof"][0]) {
         paymentProofUrl = await uploadStream(
           files["paymentProof"][0].buffer,
+          files["paymentProof"][0].mimetype,
           "fc_registration/payments",
         );
       }
@@ -259,7 +266,7 @@ app.post(
       // 2. Insert into Supabase
       const { data: user, error } = await supabase
         .from("users")
-        .insert([
+        .upsert([
           {
             id: uid,
             email,
@@ -280,33 +287,39 @@ app.post(
 
       if (error) {
         console.error("Supabase insert error", error);
-        throw error;
+        throw new Error(`Database error: ${error.message}`);
       }
 
       // 3. Notify Telegram Admin
-      if (registrationBot && adminChatId) {
-        const tgMsg = `New Registration:\nName: ${name}\nAge: ${age}\nMobile: ${mobile}\nFC Name: ${fcName}\nOVR: ${fcOvr}\nExp: ${fcExperience}`;
-        const opts = {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: "Approve ✅", callback_data: `approve_${uid}` },
-                { text: "Reject ❌", callback_data: `reject_${uid}` },
+      try {
+        if (registrationBot && adminChatId) {
+          const tgMsg = `New Registration:\nName: ${name}\nAge: ${age}\nMobile: ${mobile}\nFC Name: ${fcName}\nOVR: ${fcOvr}\nExp: ${fcExperience}`;
+          const opts = {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: "Approve ✅", callback_data: `approve_${uid}` },
+                  { text: "Reject ❌", callback_data: `reject_${uid}` },
+                ],
               ],
-            ],
-          },
-        };
+            },
+          };
 
-        // Sending with photos is slightly more complex, we send text first, then photos
-        await registrationBot.sendMessage(adminChatId, tgMsg, opts);
-        if (photoUrl)
-          await registrationBot.sendPhoto(adminChatId, photoUrl, {
-            caption: "Personal Photo",
-          });
-        if (paymentProofUrl)
-          await registrationBot.sendPhoto(adminChatId, paymentProofUrl, {
-            caption: "Payment Proof",
-          });
+          // Sending with photos is slightly more complex, we send text first, then photos
+          await registrationBot.sendMessage(adminChatId, tgMsg, opts);
+          if (files["photo"] && files["photo"][0]) {
+            await registrationBot.sendPhoto(adminChatId, files["photo"][0].buffer, {
+              caption: "Personal Photo",
+            });
+          }
+          if (files["paymentProof"] && files["paymentProof"][0]) {
+            await registrationBot.sendPhoto(adminChatId, files["paymentProof"][0].buffer, {
+              caption: "Payment Proof",
+            });
+          }
+        }
+      } catch (tgError) {
+        console.error("Telegram notification error:", tgError);
       }
 
       res.json({ success: true, user });
@@ -333,19 +346,22 @@ app.post(
 
       let screenshotUrl = "";
       if (file) {
-        const uploadStream = (fileBuffer: Buffer): Promise<string> => {
+        const uploadStream = (fileBuffer: Buffer, mimetype: string): Promise<string> => {
+          if (!process.env.CLOUDINARY_API_KEY) {
+            return Promise.resolve(""); // Do not embed large base64 strings
+          }
           return new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
               { folder: "fc_registration/results" },
               (error, result) => {
                 if (result) resolve(result.secure_url);
-                else reject(error);
+                else reject(new Error(error?.message || "Cloudinary error"));
               },
             );
             stream.end(fileBuffer);
           });
         };
-        screenshotUrl = await uploadStream(file.buffer);
+        screenshotUrl = await uploadStream(file.buffer, file.mimetype);
       }
 
       // Insert result
@@ -360,27 +376,31 @@ app.post(
         },
       ]).select().single();
 
-      if (error) throw error;
+      if (error) throw new Error(`Database error: ${error.message}`);
 
       // Notify Telegram Admin
-      if (resultsBot && resultsChatId) {
-        await resultsBot.sendMessage(
-          resultsChatId,
-          `New Match Result Uploaded by ${uid}:\nScore: ${score1} - ${score2}\nOpponent: ${opponentId}`,
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  { text: "Verify ✅", callback_data: `verify_${insertedMatch.id}` },
-                  { text: "Reject ❌", callback_data: `reject_match_${insertedMatch.id}` },
+      try {
+        if (resultsBot && resultsChatId) {
+          await resultsBot.sendMessage(
+            resultsChatId,
+            `New Match Result Uploaded by ${uid}:\nScore: ${score1} - ${score2}\nOpponent: ${opponentId}`,
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    { text: "Verify ✅", callback_data: `verify_${insertedMatch.id}` },
+                    { text: "Reject ❌", callback_data: `reject_match_${insertedMatch.id}` },
+                  ],
                 ],
-              ],
-            },
+              },
+            }
+          );
+          if (file) {
+            await resultsBot.sendPhoto(resultsChatId, file.buffer);
           }
-        );
-        if (screenshotUrl) {
-          await resultsBot.sendPhoto(resultsChatId, screenshotUrl);
         }
+      } catch (tgError) {
+        console.error("Telegram notification error:", tgError);
       }
 
       res.json({ success: true });

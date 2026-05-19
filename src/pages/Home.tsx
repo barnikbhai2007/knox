@@ -193,21 +193,21 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4">
-                <div className="border border-dashed border-gray-700 bg-gray-950/50 rounded-xl p-4 text-center hover:border-emerald-500/50 transition-colors">
+                <div className="relative border border-dashed border-gray-700 bg-gray-950/50 rounded-xl p-4 text-center hover:border-emerald-500/50 transition-colors cursor-pointer">
                   <Upload className="w-6 h-6 text-gray-500 mx-auto mb-2" />
-                  <label className="block text-sm font-medium text-gray-300 cursor-pointer">
+                  <span className="block text-sm font-medium text-gray-300">
                     Upload Personal Photo
-                    <input type="file" required accept="image/*" className="hidden" onChange={e => setPhoto(e.target.files?.[0] || null)} />
-                  </label>
+                  </span>
+                  <input type="file" required accept="image/*" className="absolute w-full h-full inset-0 opacity-0 cursor-pointer" onChange={e => setPhoto(e.target.files?.[0] || null)} />
                   {photo && <p className="text-xs text-emerald-400 mt-2 truncate">{photo.name}</p>}
                 </div>
                 
-                <div className="border border-dashed border-gray-700 bg-gray-950/50 rounded-xl p-4 text-center hover:border-emerald-500/50 transition-colors">
+                <div className="relative border border-dashed border-gray-700 bg-gray-950/50 rounded-xl p-4 text-center hover:border-emerald-500/50 transition-colors cursor-pointer">
                   <Upload className="w-6 h-6 text-gray-500 mx-auto mb-2" />
-                  <label className="block text-sm font-medium text-gray-300 cursor-pointer">
+                  <span className="block text-sm font-medium text-gray-300">
                     Upload Payment Proof
-                    <input type="file" required accept="image/*" className="hidden" onChange={e => setPayment(e.target.files?.[0] || null)} />
-                  </label>
+                  </span>
+                  <input type="file" required accept="image/*" className="absolute w-full h-full inset-0 opacity-0 cursor-pointer" onChange={e => setPayment(e.target.files?.[0] || null)} />
                   {payment && <p className="text-xs text-emerald-400 mt-2 truncate">{payment.name}</p>}
                 </div>
               </div>
