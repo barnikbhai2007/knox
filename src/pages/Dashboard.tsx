@@ -273,8 +273,19 @@ export default function Dashboard() {
 
         <div className="bg-fc-card border border-white/5 rounded-3xl p-6 mt-6">
            <h2 className="font-display uppercase text-xl font-bold tracking-wider text-fc-green mb-4">Tournament Rules</h2>
-           <div className="text-gray-400 text-sm space-y-2">
-             <p>Rules will be announced shortly. Please check back later or wait for Telegram announcements.</p>
+           <div className="text-gray-400 text-sm space-y-2 whitespace-pre-wrap">
+             {(() => {
+               const settingsBracket = brackets.find(b => b.round === 'GLOBAL_SETTINGS');
+               if (settingsBracket && settingsBracket.fc_team1) {
+                 try {
+                   const parsed = JSON.parse(settingsBracket.fc_team1);
+                   return parsed.rulesText || "Rules will be announced shortly.";
+                 } catch (e) {
+                   return "Rules will be announced shortly.";
+                 }
+               }
+               return "Rules will be announced shortly.";
+             })()}
            </div>
         </div>
       </main>

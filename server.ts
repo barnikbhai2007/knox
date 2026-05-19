@@ -411,8 +411,8 @@ app.post(
 );
 
 app.post(
-  "/api/upload-bracket",
-  upload.single("bracketImage"),
+  "/api/upload-image",
+  upload.single("image"),
   async (req, res) => {
     try {
       const file = req.file;
@@ -437,15 +437,6 @@ app.post(
       }
 
       const imageUrl = "https://telegra.ph" + result[0].src;
-
-      // Upsert into brackets table with special round
-      const { data, error } = await supabase
-         .from("brackets")
-         .upsert([{ id: "bracket-image-id", round: "BRACKET_IMAGE", fc_team1: imageUrl, score1: 0, score2: 0, fc_team2: "" }], { onConflict: 'round' })
-         .select();
-      
-      // Since round is not a unique constraint, we might need to delete existing manually:
-      await supabase.from("brackets").delete().eq("round", "BRACKET_IMAGE").neq("id", "bracket-image-id");
 
       res.json({ success: true, url: imageUrl });
     } catch (err: any) {

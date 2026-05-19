@@ -50,38 +50,63 @@ export default function Admin() {
   });
   const [editingBracketId, setEditingBracketId] = useState<string | null>(null);
 
-  // Bracket Image State
-  const [isUploadingBracket, setIsUploadingBracket] = useState(false);
+  // Platform Settings State
+  const [platformSettings, setPlatformSettings] = useState({
+    rulesText: 'Rules will be announced shortly.',
+    paymentText: 'Pay 15₹ to this QR code',
+    paymentQrUrl: ''
+  });
+  const [isUploadingQr, setIsUploadingQr] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   useEffect(() => {
     checkSession();
   }, []);
 
-  const handleUploadBracketImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadQrImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploadingBracket(true);
+    setIsUploadingQr(true);
     const formData = new FormData();
-    formData.append("bracketImage", file);
+    formData.append("image", file);
 
     try {
-      const res = await fetch("/api/upload-bracket", {
+      const res = await fetch("/api/upload-image", {
         method: "POST",
         body: formData,
       });
       const data = await res.json();
       
       if (data.success) {
-        alert("Bracket image updated successfully!");
-        fetchBrackets();
+        setPlatformSettings(prev => ({ ...prev, paymentQrUrl: data.url }));
+        alert("QR Image uploaded successfully! Remember to 'Save Settings'.");
       } else {
         alert("Failed to upload: " + data.error);
       }
     } catch (err) {
-      alert("Error uploading bracket image.");
+      alert("Error uploading image.");
     } finally {
-      setIsUploadingBracket(false);
+      setIsUploadingQr(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    setIsSavingSettings(true);
+    const payload = JSON.stringify(platformSettings);
+    const { error } = await supabase
+       .from("brackets")
+       .upsert([{ id: "global-settings-id", round: "GLOBAL_SETTINGS", fc_team1: payload, score1: 0, score2: 0, fc_team2: "" }], { onConflict: 'round' });
+    
+    // Cleanup any duplicates
+    await supabase.from("brackets").delete().eq("round", "GLOBAL_SETTINGS").neq("id", "global-settings-id");
+
+    setIsSavingSettings(false);
+    if (!error) {
+      alert("Settings saved successfully and published to players!");
+      fetchBrackets();
+    } else {
+      alert("Failed to save settings");
     }
   };
 
@@ -104,7 +129,18 @@ export default function Admin() {
 
   const fetchBrackets = async () => {
     const { data, error } = await supabase.from('brackets').select('*').order('created_at', { ascending: false });
-    if (!error && data) setBrackets(data);
+    if (!error && data) {
+      setBrackets(data);
+      const settingsBracket = data.find(b => b.round === 'GLOBAL_SETTINGS');
+      if (settingsBracket && settingsBracket.fc_team1) {
+        try {
+          const parsed = JSON.parse(settingsBracket.fc_team1);
+          setPlatformSettings(prev => ({ ...prev, ...parsed }));
+        } catch(e) {
+          console.error("Error parsing settings", e);
+        }
+      }
+    }
   };
 
   const updateUserStatus = async (uid: string, status: string) => {
@@ -362,15 +398,63 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="bg-gray-950/50 p-6 rounded-2xl border border-white/10 space-y-4">
-                  <h3 className="text-xl font-medium tracking-tight mb-2">Upload Custom Bracket Image</h3>
-                  <p className="text-sm text-gray-400 mb-4">Alternatively, upload an image of a bracket from a 3rd party tool (like Challonge) to display to players.</p>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                     <span className="px-4 py-2 bg-fc-green text-black font-bold uppercase tracking-wider rounded-lg hover:bg-emerald-400 transition-colors">
-                       {isUploadingBracket ? "Uploading..." : "Select Bracket Image"}
-                     </span>
-                     <input type="file" accept="image/*" className="hidden" onChange={handleUploadBracketImage} disabled={isUploadingBracket} />
-                  </label>
+              <div className="bg-gray-950/50 p-6 rounded-2xl border border-white/10 space-y-6">
+                <h3 className="text-xl font-medium tracking-tight border-b border-white/10 pb-4">Global Platform Settings</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-fc-green mb-2 uppercase tracking-wider">Tournament Rules (Dashboard)</label>
+                    <textarea 
+                      value={platformSettings.rulesText}
+                      onChange={e => setPlatformSettings(prev => ({...prev, rulesText: e.target.value}))}
+                      className="w-full bg-black border border-white/10 rounded-xl p-4 text-white min-h-[100px] focus:border-fc-green focus:outline-none transition-colors"
+                      placeholder="Enter the tournament rules..."
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-bold text-fc-green mb-2 uppercase tracking-wider">Payment Instructions (Registration)</label>
+                    <input 
+                      type="text"
+                      value={platformSettings.paymentText}
+                      onChange={e => setPlatformSettings(prev => ({...prev, paymentText: e.target.value}))}
+                      className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white focus:border-fc-green focus:outline-none transition-colors"
+                      placeholder="e.g. Pay 15₹ to this QR code"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-bold text-fc-green mb-2 uppercase tracking-wider">Payment QR Code Image</label>
+                    <div className="flex items-center gap-4">
+                       <label className="flex items-center gap-3 cursor-pointer">
+                          <span className="px-4 py-2 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors">
+                            {isUploadingQr ? "Uploading..." : "Upload New QR Image"}
+                          </span>
+                          <input type="file" accept="image/*" className="hidden" onChange={handleUploadQrImage} disabled={isUploadingQr} />
+                       </label>
+                       {platformSettings.paymentQrUrl && (
+                          <div className="text-xs text-green-400 bg-green-400/10 px-3 py-1 rounded">
+                             Image Uploaded
+                          </div>
+                       )}
+                    </div>
+                    {platformSettings.paymentQrUrl && (
+                        <div className="mt-4 p-2 bg-white/5 rounded-xl inline-block">
+                           <img src={platformSettings.paymentQrUrl} alt="QR Code" className="w-32 h-32 object-contain" />
+                        </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t border-white/10">
+                   <button 
+                     onClick={saveSettings} 
+                     disabled={isSavingSettings}
+                     className="w-full sm:w-auto px-8 py-3 bg-fc-green text-black font-bold uppercase tracking-wider rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-50"
+                   >
+                     {isSavingSettings ? 'Saving...' : 'Save & Publish Settings'}
+                   </button>
+                </div>
               </div>
 
               <div className="bg-fc-card p-6 rounded-2xl border border-white/10 mt-8 mb-6 overflow-hidden max-w-full relative z-0">

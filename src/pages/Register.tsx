@@ -26,10 +26,23 @@ export default function Register() {
 
   const [success, setSuccess] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [platformSettings, setPlatformSettings] = useState<any>({
+    paymentText: 'Pay 15₹ to this QR code',
+    paymentQrUrl: ''
+  });
 
   useEffect(() => {
     const checkUser = async () => {
       if (!supabase) return;
+      
+      // Fetch platform settings
+      const { data: settingsData } = await supabase.from('brackets').select('*').eq('round', 'GLOBAL_SETTINGS').maybeSingle();
+      if (settingsData && settingsData.fc_team1) {
+         try {
+            setPlatformSettings(JSON.parse(settingsData.fc_team1));
+         } catch(e) {}
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate('/');
@@ -176,7 +189,21 @@ export default function Register() {
           </div>
 
           <div className="bg-fc-card p-6 rounded-2xl border border-white/5 space-y-4">
-            <h3 className="font-display uppercase text-xl font-bold tracking-wider text-fc-green">Attachments</h3>
+            <h3 className="font-display uppercase text-xl font-bold tracking-wider text-fc-green">Payment & Attachments</h3>
+
+            {(platformSettings.paymentText || platformSettings.paymentQrUrl) && (
+               <div className="bg-gray-950/50 border border-white/10 rounded-xl p-4 flex flex-col md:flex-row items-center gap-6 mb-4">
+                  {platformSettings.paymentQrUrl && (
+                     <img src={platformSettings.paymentQrUrl} alt="Payment QR" className="w-32 h-32 rounded-lg bg-white p-2 object-contain" />
+                  )}
+                  {platformSettings.paymentText && (
+                     <div className="text-center md:text-left">
+                       <h4 className="font-bold text-lg mb-1">Entry Fee</h4>
+                       <p className="text-gray-300 text-sm whitespace-pre-wrap">{platformSettings.paymentText}</p>
+                     </div>
+                  )}
+               </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
