@@ -197,7 +197,7 @@ export default function Register() {
                         </span>
                       </>
                    )}
-                   <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => { setPhoto(e.target.files?.[0] || null); setError(''); }} />
+                   <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" className="hidden" onChange={(e) => { setPhoto(e.target.files?.[0] || null); setError(''); }} />
                  </label>
               </div>
 
@@ -220,7 +220,7 @@ export default function Register() {
                         </span>
                       </>
                    )}
-                   <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => { setPaymentProof(e.target.files?.[0] || null); setError(''); }} />
+                   <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" className="hidden" onChange={(e) => { setPaymentProof(e.target.files?.[0] || null); setError(''); }} />
                  </label>
               </div>
             </div>
