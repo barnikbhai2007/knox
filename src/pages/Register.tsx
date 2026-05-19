@@ -28,7 +28,7 @@ export default function Register() {
   const [submitted, setSubmitted] = useState(false);
   const [platformSettings, setPlatformSettings] = useState<any>({
     paymentText: 'Pay 15₹ to this QR code',
-    paymentQrUrl: ''
+    paymentQrUrl: 'https://res.cloudinary.com/speed-searches/image/upload/v1779184989/Screenshot_20260511_125115_FamApp_kaxtkn.jpg'
   });
 
   useEffect(() => {
