@@ -106,8 +106,8 @@ export default function Admin() {
 
     const payload = {
       round: bracket.round,
-      player1_id: bracket.player1_id,
-      player2_id: bracket.player2_id,
+      player1_id: bracket.player1_id || null,
+      player2_id: bracket.player2_id || null,
       score1: p1Score,
       score2: p2Score,
       fc_team1: bracket.fc_team1,
@@ -131,6 +131,25 @@ export default function Admin() {
     }
   };
 
+  const generateStage = async (round: string, count: number) => {
+    if (!confirm(`Generate ${count} TBD matches for ${round}?`)) return;
+    
+    const matchesToInsert = Array.from({ length: count }).map(() => ({
+      round,
+      player1_id: null,
+      player2_id: null,
+      score1: 0,
+      score2: 0,
+      fc_team1: '',
+      fc_team2: '',
+    }));
+
+    const { data, error } = await supabase.from('brackets').insert(matchesToInsert).select();
+    if (!error && data) {
+      setBrackets([...data, ...brackets]);
+    }
+  };
+
   const deleteBracket = async (id: string) => {
     if (!confirm('Delete this match?')) return;
     const { error } = await supabase.from('brackets').delete().eq('id', id);
@@ -144,7 +163,8 @@ export default function Admin() {
   const filteredUsers = users.filter(u => userFilter === 'all' || u.status === userFilter);
   const approvedUsers = users.filter(u => u.status === 'approved');
 
-  const getUserName = (id: string) => {
+  const getUserName = (id?: string | null) => {
+    if (!id) return 'TBD';
     return users.find(u => u.id === id)?.name || 'Unknown';
   };
 
@@ -277,7 +297,7 @@ export default function Admin() {
                   <div className="space-y-1 lg:col-span-2">
                     <label className="text-xs text-gray-400 uppercase text-fc-green">Player 1</label>
                     <select value={newMatch.player1_id || ""} onChange={e => setNewMatch({ ...newMatch, player1_id: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white">
-                      <option value="">Select Player...</option>
+                      <option value="">TBD (Select Player...)</option>
                       {approvedUsers.map(u => <option key={u.id} value={u.id}>{u.name} ({u.fc_name})</option>)}
                     </select>
                     <input type="text" placeholder="FC Team Name" value={newMatch.fc_team1} onChange={e => setNewMatch({ ...newMatch, fc_team1: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 mt-2 text-sm" />
@@ -287,16 +307,27 @@ export default function Admin() {
                   <div className="space-y-1 lg:col-span-2">
                     <label className="text-xs text-gray-400 uppercase text-red-500">Player 2</label>
                     <select value={newMatch.player2_id || ""} onChange={e => setNewMatch({ ...newMatch, player2_id: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white">
-                      <option value="">Select Player...</option>
+                      <option value="">TBD (Select Player...)</option>
                       {approvedUsers.map(u => <option key={u.id} value={u.id}>{u.name} ({u.fc_name})</option>)}
                     </select>
                     <input type="text" placeholder="FC Team Name" value={newMatch.fc_team2} onChange={e => setNewMatch({ ...newMatch, fc_team2: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 mt-2 text-sm" />
                     <input type="number" placeholder="Score" value={newMatch.score2} onChange={e => setNewMatch({ ...newMatch, score2: parseInt(e.target.value) || 0 })} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 mt-2 text-sm" />
                   </div>
                 </div>
-                <button onClick={() => saveBracket(newMatch)} disabled={!newMatch.player1_id || !newMatch.player2_id} className="w-full py-3 bg-fc-green text-black font-bold uppercase tracking-wider rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-50 mt-4">
-                  Add Match
+                <button onClick={() => saveBracket(newMatch)} className="w-full py-3 bg-fc-green text-black font-bold uppercase tracking-wider rounded-xl hover:bg-emerald-400 transition-colors mt-4">
+                  Add Single Match
                 </button>
+              </div>
+
+              <div className="bg-gray-950/50 p-6 rounded-2xl border border-white/10 space-y-4">
+                <h3 className="text-xl font-medium tracking-tight mb-4">Generate Bracket Stage (TBD)</h3>
+                <div className="flex flex-wrap gap-4">
+                  <button onClick={() => generateStage('Round of 32', 16)} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors">Round of 32 (16 Matches)</button>
+                  <button onClick={() => generateStage('Round of 16', 8)} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors">Round of 16 (8 Matches)</button>
+                  <button onClick={() => generateStage('Quarter Final', 4)} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors">Quarter Final (4 Matches)</button>
+                  <button onClick={() => generateStage('Semi Final', 2)} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors">Semi Final (2 Matches)</button>
+                  <button onClick={() => generateStage('Final', 1)} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors">Final (1 Match)</button>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -322,6 +353,7 @@ export default function Admin() {
                          <div className="grid grid-cols-2 gap-4">
                             <div>
                                <select value={bracket.player1_id || ""} onChange={e => setBrackets(brackets.map(b => b.id === bracket.id ? { ...b, player1_id: e.target.value } : b))} className="w-full bg-black border border-white/10 rounded px-2 py-1 mb-2 text-sm">
+                                  <option value="">TBD</option>
                                   {approvedUsers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                </select>
                                <input type="text" value={bracket.fc_team1} onChange={e => setBrackets(brackets.map(b => b.id === bracket.id ? { ...b, fc_team1: e.target.value } : b))} className="w-full bg-black border border-white/10 rounded px-2 py-1 mb-2 text-sm" placeholder="Team" />
@@ -329,6 +361,7 @@ export default function Admin() {
                             </div>
                             <div>
                                <select value={bracket.player2_id || ""} onChange={e => setBrackets(brackets.map(b => b.id === bracket.id ? { ...b, player2_id: e.target.value } : b))} className="w-full bg-black border border-white/10 rounded px-2 py-1 mb-2 text-sm">
+                                  <option value="">TBD</option>
                                   {approvedUsers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                </select>
                                <input type="text" value={bracket.fc_team2} onChange={e => setBrackets(brackets.map(b => b.id === bracket.id ? { ...b, fc_team2: e.target.value } : b))} className="w-full bg-black border border-white/10 rounded px-2 py-1 mb-2 text-sm" placeholder="Team" />
