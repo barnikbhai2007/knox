@@ -1,9 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
-import { v2 as cloudinary } from "cloudinary";
 import formidable from "formidable";
 import TelegramBot from "node-telegram-bot-api";
-import fs from "fs";
 
 export const config = {
   api: { bodyParser: false },
@@ -12,12 +10,6 @@ export const config = {
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 const registrationBotToken = process.env.TELEGRAM_REGISTRATION_BOT_TOKEN;
 const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
@@ -32,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const form = formidable({ multiples: true, keepExtensions: true });
-    const [fields, files] = await form.parse(req);
+    const [fields] = await form.parse(req);
 
     const name = Array.isArray(fields.name) ? fields.name[0] : (fields.name as string);
     const age = Array.isArray(fields.age) ? fields.age[0] : (fields.age as string);
@@ -43,35 +35,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const fcExperience = Array.isArray(fields.fcExperience) ? fields.fcExperience[0] : (fields.fcExperience as string);
     const uid = Array.isArray(fields.uid) ? fields.uid[0] : (fields.uid as string);
     const email = Array.isArray(fields.email) ? fields.email[0] : (fields.email as string);
-
-    let photoUrl = "";
-    let paymentProofUrl = "";
-
-    const uploadStream = (filePath: string, folder: string): Promise<string> => {
-      if (!process.env.CLOUDINARY_API_KEY) {
-        return Promise.resolve("");
-      }
-      return new Promise((resolve, reject) => {
-        cloudinary.uploader.upload(
-          filePath,
-          { folder },
-          (error, result) => {
-            if (result) resolve(result.secure_url);
-            else reject(new Error(error?.message || "Cloudinary error"));
-          }
-        );
-      });
-    };
-
-    const photoFile = Array.isArray(files.photo) ? files.photo[0] : files.photo;
-    const paymentProofFile = Array.isArray(files.paymentProof) ? files.paymentProof[0] : files.paymentProof;
-
-    if (photoFile) {
-      photoUrl = await uploadStream(photoFile.filepath, "fc_registration/photos");
-    }
-    if (paymentProofFile) {
-      paymentProofUrl = await uploadStream(paymentProofFile.filepath, "fc_registration/payments");
-    }
 
     // Insert into Supabase
     const { data: user, error } = await supabase
@@ -87,8 +50,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           fc_uid: fcUid,
           fc_ovr: fcOvr,
           fc_experience: fcExperience,
-          photo_url: photoUrl,
-          payment_proof_url: paymentProofUrl,
+          photo_url: "",
+          payment_proof_url: "",
           status: "pending",
         },
       ])
@@ -115,15 +78,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
 
         await registrationBot.sendMessage(adminChatId, tgMsg, opts);
-        
-        if (photoFile) {
-          const photoStream = fs.createReadStream(photoFile.filepath);
-          await registrationBot.sendPhoto(adminChatId, photoStream, { caption: "Personal Photo" });
-        }
-        if (paymentProofFile) {
-          const paymentStream = fs.createReadStream(paymentProofFile.filepath);
-          await registrationBot.sendPhoto(adminChatId, paymentStream, { caption: "Payment Proof" });
-        }
       }
     } catch (tgError) {
       console.error("Telegram notification error:", tgError);

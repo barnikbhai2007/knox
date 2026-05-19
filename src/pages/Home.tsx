@@ -69,13 +69,10 @@ export default function Home() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!photo || !payment) return alert('Please upload both photo and payment proof.');
     
     setSubmitting(true);
     const data = new FormData();
     Object.entries(formData).forEach(([key, value]) => data.append(key, value as string));
-    data.append('photo', photo);
-    data.append('paymentProof', payment);
     data.append('uid', session.user.id);
     data.append('email', session.user.email);
 
@@ -103,13 +100,11 @@ export default function Home() {
 
   const handleMatchUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!screenshot) return alert('Please upload match screenshot.');
     setUploadingMatch(true);
     
     const data = new FormData();
     data.append('uid', session.user.id);
     Object.entries(matchData).forEach(([key, value]) => data.append(key, value as string));
-    data.append('resultScreenshot', screenshot);
 
     try {
       const res = await fetch('/api/results', { method: 'POST', body: data });
@@ -117,7 +112,6 @@ export default function Home() {
       if (result.success) {
         alert('Match result submitted!');
         setMatchData({ score1: '', score2: '', opponentId: '' });
-        setScreenshot(null);
       } else {
         alert(result.error);
       }
@@ -192,26 +186,6 @@ export default function Home() {
                 <input required className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all" value={formData.fcExperience} onChange={e => setFormData({...formData, fcExperience: e.target.value})} />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4">
-                <label className="border border-dashed border-gray-700 bg-gray-950/50 rounded-xl p-4 text-center hover:border-emerald-500/50 transition-colors cursor-pointer block">
-                  <Upload className="w-6 h-6 text-gray-500 mx-auto mb-2" />
-                  <span className="block text-sm font-medium text-gray-300">
-                    Upload Personal Photo
-                  </span>
-                  <input type="file" accept="image/*" className="hidden" onChange={e => setPhoto(e.target.files?.[0] || null)} />
-                  {photo && <p className="text-xs text-emerald-400 mt-2 truncate">{photo.name}</p>}
-                </label>
-                
-                <label className="border border-dashed border-gray-700 bg-gray-950/50 rounded-xl p-4 text-center hover:border-emerald-500/50 transition-colors cursor-pointer block">
-                  <Upload className="w-6 h-6 text-gray-500 mx-auto mb-2" />
-                  <span className="block text-sm font-medium text-gray-300">
-                    Upload Payment Proof
-                  </span>
-                  <input type="file" accept="image/*" className="hidden" onChange={e => setPayment(e.target.files?.[0] || null)} />
-                  {payment && <p className="text-xs text-emerald-400 mt-2 truncate">{payment.name}</p>}
-                </label>
-              </div>
-
               <button 
                 disabled={submitting}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl mt-6 transition-all disabled:opacity-50 flex justify-center items-center gap-2"
@@ -259,15 +233,6 @@ export default function Home() {
                   <div>
                     <label className="block text-sm font-medium text-gray-400 mb-1">Opponent Team/ID</label>
                     <input required className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all" value={matchData.opponentId} onChange={e => setMatchData({...matchData, opponentId: e.target.value})} />
-                  </div>
-                  
-                  <div className="border border-dashed border-gray-700 bg-gray-950/50 rounded-xl p-4 text-center hover:border-emerald-500/50 transition-colors">
-                    <Upload className="w-6 h-6 text-gray-500 mx-auto mb-2" />
-                    <label className="block text-sm font-medium text-gray-300 cursor-pointer">
-                      Upload Result Screenshot
-                      <input type="file" accept="image/*" className="hidden" onChange={e => setScreenshot(e.target.files?.[0] || null)} />
-                    </label>
-                    {screenshot && <p className="text-xs text-emerald-400 mt-2 truncate">{screenshot.name}</p>}
                   </div>
 
                   <button 

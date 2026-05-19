@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { motion } from 'motion/react';
-import { Upload, ChevronRight, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { ChevronRight, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export default function Register() {
@@ -21,8 +21,6 @@ export default function Register() {
     fcExperience: ''
   });
 
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [success, setSuccess] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -56,15 +54,11 @@ export default function Register() {
       if (!name || !age || !mobile || !fcName || !fcUid || !fcOvr || !fcExperience) {
         throw new Error("Please fill out all personal and profile details");
       }
-      
-      if (!photo || !paymentProof) throw new Error("Please upload both your photo and payment proof");
 
       const form = new FormData();
       Object.entries(formData).forEach(([key, value]) => form.append(key, value));
       form.append('uid', userAuth.id);
       form.append('email', userAuth.email || '');
-      form.append('photo', photo);
-      form.append('paymentProof', paymentProof);
 
       const response = await fetch('/api/register', {
         method: 'POST',
@@ -171,58 +165,6 @@ export default function Register() {
                   <option value="Pro">Pro / Tournament Player</option>
                 </select>
               </label>
-            </div>
-          </div>
-
-          <div className="bg-fc-card p-6 rounded-2xl border border-white/5 space-y-4">
-            <h3 className="font-display uppercase text-xl text-fc-green">Attachments</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold ml-1">Personal Photo</span>
-                 <label className={cn(
-                    "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-colors relative overflow-hidden",
-                    photo ? "border-fc-green bg-fc-green/5" 
-                          : submitted && !photo 
-                              ? "border-red-500 bg-red-950/20" 
-                              : "border-gray-600 hover:border-gray-400 bg-black/50"
-                 )}>
-                   {photo ? (
-                      <span className="font-mono text-xs text-fc-green px-2 text-center break-all">{photo.name}</span>
-                   ) : (
-                      <>
-                        <Upload className={cn("w-6 h-6 mb-2", submitted && !photo ? "text-red-500" : "text-gray-400")} />
-                        <span className={cn("text-xs font-medium", submitted && !photo ? "text-red-500" : "text-gray-400")}>
-                           {submitted && !photo ? "Photo Required!" : "Upload Image"}
-                        </span>
-                      </>
-                   )}
-                   <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" className="hidden" onChange={(e) => { setPhoto(e.target.files?.[0] || null); setError(''); }} />
-                 </label>
-              </div>
-
-              <div className="space-y-1">
-                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold ml-1">Payment Proof</span>
-                 <label className={cn(
-                    "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-colors relative overflow-hidden",
-                    paymentProof ? "border-fc-green bg-fc-green/5" 
-                                 : submitted && !paymentProof
-                                     ? "border-red-500 bg-red-950/20"
-                                     : "border-gray-600 hover:border-gray-400 bg-black/50"
-                 )}>
-                   {paymentProof ? (
-                      <span className="font-mono text-xs text-fc-green px-2 text-center break-all">{paymentProof.name}</span>
-                   ) : (
-                      <>
-                        <Upload className={cn("w-6 h-6 mb-2", submitted && !paymentProof ? "text-red-500" : "text-gray-400")} />
-                        <span className={cn("text-xs font-medium", submitted && !paymentProof ? "text-red-500" : "text-gray-400")}>
-                           {submitted && !paymentProof ? "Proof Required!" : "Upload Screenshot"}
-                        </span>
-                      </>
-                   )}
-                   <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" className="hidden" onChange={(e) => { setPaymentProof(e.target.files?.[0] || null); setError(''); }} />
-                 </label>
-              </div>
             </div>
           </div>
 
