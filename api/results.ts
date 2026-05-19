@@ -24,12 +24,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const form = formidable({ multiples: true, keepExtensions: true });
-    const [fields] = await form.parse(req);
+    const [fields, files] = await form.parse(req);
 
     const uid = Array.isArray(fields.uid) ? fields.uid[0] : (fields.uid as string);
     const score1 = Array.isArray(fields.score1) ? fields.score1[0] : (fields.score1 as string);
     const score2 = Array.isArray(fields.score2) ? fields.score2[0] : (fields.score2 as string);
     const opponentId = Array.isArray(fields.opponentId) ? fields.opponentId[0] : (fields.opponentId as string);
+
+    const screenshot1 = Array.isArray(files.screenshot1) ? files.screenshot1[0] : files.screenshot1;
+    const screenshot2 = Array.isArray(files.screenshot2) ? files.screenshot2[0] : files.screenshot2;
 
     // Insert result
     const { data: insertedMatch, error } = await supabase.from("matches").insert([
@@ -62,6 +65,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             },
           }
         );
+        if (screenshot1) {
+          const stream = fs.createReadStream(screenshot1.filepath);
+          await resultsBot.sendPhoto(resultsChatId, stream, { caption: "Leg 1 Screenshot" });
+        }
+        if (screenshot2) {
+          const stream = fs.createReadStream(screenshot2.filepath);
+          await resultsBot.sendPhoto(resultsChatId, stream, { caption: "Leg 2 Screenshot" });
+        }
       }
     } catch (tgError) {
       console.error("Telegram notification error:", tgError);

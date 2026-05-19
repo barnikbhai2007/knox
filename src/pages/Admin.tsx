@@ -25,6 +25,7 @@ type Bracket = {
   fc_team1: string;
   fc_team2: string;
   winner_id?: string | null;
+  match_date?: string;
 };
 
 export default function Admin() {
@@ -111,6 +112,7 @@ export default function Admin() {
       score2: p2Score,
       fc_team1: bracket.fc_team1,
       fc_team2: bracket.fc_team2,
+      match_date: bracket.match_date,
       winner_id: winner,
     };
 
@@ -260,7 +262,16 @@ export default function Admin() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
                   <div className="space-y-1">
                     <label className="text-xs text-gray-400 uppercase">Round</label>
-                    <input type="text" value={newMatch.round} onChange={e => setNewMatch({ ...newMatch, round: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 focus:border-fc-green transition-colors outline-none" />
+                    <select value={newMatch.round} onChange={e => setNewMatch({ ...newMatch, round: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-fc-green transition-colors">
+                      <option value="Round of 32">Round of 32</option>
+                      <option value="Round of 16">Round of 16</option>
+                      <option value="Quarter Final">Quarter Final</option>
+                      <option value="Semi Final">Semi Final</option>
+                      <option value="Final">Final</option>
+                    </select>
+                    
+                    <label className="text-xs text-gray-400 uppercase mt-4 block">Match Date</label>
+                    <input type="text" placeholder="e.g. 24 May, 8:00 PM" value={newMatch.match_date || ''} onChange={e => setNewMatch({ ...newMatch, match_date: e.target.value })} className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-sm focus:border-fc-green transition-colors outline-none" />
                   </div>
 
                   <div className="space-y-1 lg:col-span-2">
@@ -295,9 +306,18 @@ export default function Admin() {
                   if (isEditing) {
                     return (
                       <div key={bracket.id} className="bg-gray-950/80 p-4 rounded-xl border border-fc-green/50 space-y-4">
-                         <div className="flex justify-between items-center mb-2">
-                            <input type="text" value={bracket.round} onChange={e => setBrackets(brackets.map(b => b.id === bracket.id ? { ...b, round: e.target.value } : b))} className="bg-black border border-white/10 rounded px-2 py-1 text-sm outline-none" />
-                            <button onClick={() => saveBracket(bracket)} className="flex items-center gap-1 text-sm text-black bg-fc-green px-3 py-1 rounded"><Save className="w-4 h-4"/> Save</button>
+                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                            <div className="flex gap-2 w-full sm:w-auto">
+                              <select value={bracket.round} onChange={e => setBrackets(brackets.map(b => b.id === bracket.id ? { ...b, round: e.target.value } : b))} className="bg-black border border-white/10 rounded px-2 py-1 text-sm outline-none text-white focus:border-fc-green">
+                                <option value="Round of 32">Round of 32</option>
+                                <option value="Round of 16">Round of 16</option>
+                                <option value="Quarter Final">Quarter Final</option>
+                                <option value="Semi Final">Semi Final</option>
+                                <option value="Final">Final</option>
+                              </select>
+                              <input type="text" placeholder="Date (e.g. 24 May, 8 PM)" value={bracket.match_date || ''} onChange={e => setBrackets(brackets.map(b => b.id === bracket.id ? { ...b, match_date: e.target.value } : b))} className="bg-black border border-white/10 rounded px-2 py-1 text-sm outline-none text-white focus:border-fc-green w-full sm:w-48" />
+                            </div>
+                            <button onClick={() => saveBracket(bracket)} className="flex items-center gap-1 text-sm text-black bg-fc-green px-3 py-1.5 rounded-lg shrink-0"><Save className="w-4 h-4"/> Save</button>
                          </div>
                          <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -322,7 +342,10 @@ export default function Admin() {
                   return (
                     <div key={bracket.id} className="group bg-gray-950/30 p-4 rounded-xl border border-white/5 flex items-center justify-between hover:bg-gray-950/60 transition-colors">
                       <div className="flex-1">
-                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold font-display">{bracket.round}</p>
+                        <div className="flex justify-between items-center mb-2">
+                           <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold font-display">{bracket.round}</p>
+                           {bracket.match_date && <p className="text-xs text-fc-green font-mono">{bracket.match_date}</p>}
+                        </div>
                         <div className="flex items-center gap-6">
                           <div className={cn("flex flex-col", bracket.winner_id === bracket.player1_id ? "text-fc-green font-bold" : "text-gray-300")}>
                             <span>{getUserName(bracket.player1_id)}</span>
