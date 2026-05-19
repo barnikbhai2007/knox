@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Users, LayoutDashboard, Shield, LogOut, Check, X, Trash2, Edit2, Save } from 'lucide-react';
 import { cn } from '../lib/utils';
+import TournamentBracket from '../components/TournamentBracket';
 
 type UserData = {
   id: string;
@@ -327,6 +328,13 @@ export default function Admin() {
                   <button onClick={() => generateStage('Quarter Final', 4)} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors">Quarter Final (4 Matches)</button>
                   <button onClick={() => generateStage('Semi Final', 2)} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors">Semi Final (2 Matches)</button>
                   <button onClick={() => generateStage('Final', 1)} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors">Final (1 Match)</button>
+                </div>
+              </div>
+
+              <div className="bg-fc-card p-6 rounded-2xl border border-white/10 mt-8 mb-6 overflow-hidden max-w-full relative z-0">
+                <h3 className="text-xl font-medium tracking-tight mb-8">Tournament Visual Bracket</h3>
+                <div className="w-full overflow-x-auto pb-4">
+                   <TournamentBracket brackets={brackets} />
                 </div>
               </div>
 

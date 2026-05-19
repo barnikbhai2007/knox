@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import { LogOut, Upload, Swords, Clock, AlertTriangle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import axios from 'axios';
+import TournamentBracket from '../components/TournamentBracket';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -90,6 +91,8 @@ export default function Dashboard() {
       setUploadLoading(false);
     }
   };
+
+  const userMatches = brackets.filter(b => b.player1_id === userData?.id || b.player2_id === userData?.id);
 
   if (loading) {
     return <div className="h-screen bg-fc-dark flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-fc-green"></div></div>;
@@ -220,10 +223,10 @@ export default function Dashboard() {
               </div>
 
               <div className="bg-fc-card border border-white/5 rounded-3xl p-6">
-                 <h2 className="font-display uppercase text-xl font-bold tracking-wider text-fc-green mb-6">Upcoming Matches & Brackets</h2>
-                 {brackets.length > 0 ? (
+                 <h2 className="font-display uppercase text-xl font-bold tracking-wider text-fc-green mb-6">Your Upcoming Matches</h2>
+                 {userMatches.length > 0 ? (
                     <div className="space-y-4">
-                      {brackets.map(bracket => {
+                      {userMatches.map(bracket => {
                         return (
                           <div key={bracket.id} className="bg-gray-950/50 p-4 rounded-xl border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between">
                             <div className="flex-1">
@@ -252,14 +255,21 @@ export default function Dashboard() {
                       })}
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center text-center opacity-60 h-32">
-                       <p className="text-sm font-sans text-gray-400 max-w-xs">The tournament bracket will be generated and managed by admins once all registrations are approved.</p>
+                    <div className="flex flex-col items-center justify-center text-center opacity-60 h-32 text-gray-400 text-sm">
+                       No upcoming matches found for your team.
                     </div>
                   )}
               </div>
 
            </div>
         )}
+
+        <div className="bg-fc-card border border-white/5 rounded-3xl p-6 mt-6 overflow-hidden max-w-full">
+           <h2 className="font-display uppercase text-xl font-bold tracking-wider text-fc-green mb-8">Tournament Bracket</h2>
+           <div className="w-full overflow-x-auto pb-4">
+             <TournamentBracket brackets={brackets} />
+           </div>
+        </div>
 
         <div className="bg-fc-card border border-white/5 rounded-3xl p-6 mt-6">
            <h2 className="font-display uppercase text-xl font-bold tracking-wider text-fc-green mb-4">Tournament Rules</h2>
